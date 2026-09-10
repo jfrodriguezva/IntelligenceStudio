@@ -1,6 +1,9 @@
 using Mis.Api.Contracts;
+using Mis.Api.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+
+EncryptedSecretsLoader.AddIfPresent(builder.Configuration, builder.Environment.ContentRootPath);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();

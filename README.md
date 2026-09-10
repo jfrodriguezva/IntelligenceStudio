@@ -29,17 +29,16 @@ Target stack: Next.js 16, React and TypeScript; .NET 10, ASP.NET Core, EF Core a
 
 ## Local development
 
-Prerequisites: .NET SDK `10.0.400`, Node `24`, pnpm `11`, and a local SQL Server instance. The default development connection uses a dedicated SQL Server login stored in .NET user-secrets.
+Prerequisites: .NET SDK `10.0.400`, Node `24`, pnpm `11`, and a local SQL Server instance. The project can load portable encrypted credentials from `secrets.enc.json`; its AES-256 key is provided outside Git through the `MIS_SECRETS_KEY` environment variable.
 
 ```powershell
-dotnet user-secrets set "ConnectionStrings:MisDatabase" "Server=localhost;Database=MadridIntelligenceStudio;User Id=mis_app;Password=REPLACE_ME;Encrypt=True;TrustServerCertificate=True" --project services/api/Mis.Api.csproj
-dotnet user-secrets set "FootballData:ApiFootball:ApiKey" "REPLACE_ME" --project services/api/Mis.Api.csproj
+pwsh ./scripts/secrets/Protect-MisSecrets.ps1
 dotnet run --project services/api/Mis.Api.csproj --urls http://localhost:5080
 pnpm --dir apps/web install
 pnpm --dir apps/web dev
 ```
 
-Replace the two placeholders locally; do not paste either secret into chat, source code, `.env.example`, Git or the browser. The API exposes `/health/live`, `/health/ready`, and `/api/v1/system/status`. The web forwards `/api/*` to `http://localhost:5080` by default. The provider key is not used until the manual import slice is implemented.
+Write local values in `secrets.local.json`, set `MIS_SECRETS_KEY` outside the repository, then run the encryption script. Commit and transfer `secrets.enc.json` only; `secrets.local.json` is ignored. The API refuses to start if an encrypted file exists but its key is absent or wrong. The API exposes `/health/live`, `/health/ready`, and `/api/v1/system/status`. The web forwards `/api/*` to `http://localhost:5080` by default. The provider key is not used until the manual import slice is implemented.
 
 Run the current checks with:
 
