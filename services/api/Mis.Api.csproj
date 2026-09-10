@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <AssemblyName>Mis.Api</AssemblyName>
+    <RootNamespace>Mis.Api</RootNamespace>
+    <UserSecretsId>7a3c6b2b-5c28-4eb3-8898-3d8c219352ce</UserSecretsId>
+  </PropertyGroup>
+</Project>

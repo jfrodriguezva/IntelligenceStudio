@@ -1,0 +1,27 @@
+# .NET
+bin/
+obj/
+TestResults/
+
+# Node.js
+node_modules/
+.next/
+out/
+coverage/
+
+# Local configuration and editor files
+.env
+.env.local
+.env.*.local
+!.env.example
+.vs/
+.vscode/
+.idea/
+
+# Docker volumes and generated artifacts
+.local-data/
+artifacts/
+
+# Operating system files
+.DS_Store
+Thumbs.db
