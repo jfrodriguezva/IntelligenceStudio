@@ -5,6 +5,8 @@ public interface IFixtureQueries
     Task<IReadOnlyList<FixtureSummary>> GetRecentAndUpcomingAsync(CancellationToken cancellationToken);
 
     Task<FixtureSummary?> GetByIdAsync(Guid fixtureId, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<TeamMatchStatisticSummary>> GetStatisticsAsync(Guid fixtureId, CancellationToken cancellationToken);
 }
 
 public sealed record FixtureSummary(
@@ -17,3 +19,5 @@ public sealed record FixtureSummary(
     string Status,
     int? HomeGoals,
     int? AwayGoals);
+
+public sealed record TeamMatchStatisticSummary(string Team, int? PossessionPercent, int? Shots, int? ShotsOnTarget, int? Corners);

@@ -70,6 +70,11 @@ app.MapGet("/api/v1/fixtures/{fixtureId:guid}/form", async (Guid fixtureId, ITea
     .WithName("GetFixtureTeamForm")
     .Produces<IReadOnlyList<TeamFormSummary>>();
 
+app.MapGet("/api/v1/fixtures/{fixtureId:guid}/statistics", async (Guid fixtureId, IFixtureQueries queries, CancellationToken token) =>
+    Results.Ok(await queries.GetStatisticsAsync(fixtureId, token)))
+    .WithName("GetFixtureStatistics")
+    .Produces<IReadOnlyList<TeamMatchStatisticSummary>>();
+
 app.MapPost("/api/v1/acquisition/fixtures/refresh", async (HttpRequest request, IConfiguration configuration, IManualFixtureSync sync, CancellationToken token) =>
 {
     var suppliedKey = request.Headers[AdminRefreshAuthorization.HeaderName].ToString();

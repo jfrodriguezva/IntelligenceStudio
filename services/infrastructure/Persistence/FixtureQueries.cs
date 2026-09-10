@@ -25,4 +25,11 @@ public sealed class FixtureQueries(MisDbContext database) : IFixtureQueries
          where fixture.Id == fixtureId
          select new FixtureSummary(fixture.Id, competition.Name, season.Label, home.Name, away.Name, fixture.KickoffUtc, fixture.Status.ToString(), fixture.RegulationHomeGoals, fixture.RegulationAwayGoals))
         .SingleOrDefaultAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<TeamMatchStatisticSummary>> GetStatisticsAsync(Guid fixtureId, CancellationToken cancellationToken) =>
+        await (from statistic in database.TeamMatchStatistics.AsNoTracking()
+               join team in database.Teams.AsNoTracking() on statistic.TeamId equals team.Id
+               where statistic.FixtureId == fixtureId
+               select new TeamMatchStatisticSummary(team.Name, statistic.PossessionPercent, statistic.Shots, statistic.ShotsOnTarget, statistic.Corners))
+            .ToListAsync(cancellationToken);
 }
