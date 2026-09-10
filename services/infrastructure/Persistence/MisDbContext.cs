@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Mis.Domain.Acquisition;
 using Mis.Domain.Football;
 
 namespace Mis.Infrastructure.Persistence;
@@ -12,6 +13,10 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
     public DbSet<Team> Teams => Set<Team>();
 
     public DbSet<Fixture> Fixtures => Set<Fixture>();
+
+    public DbSet<ProviderEntityMapping> ProviderEntityMappings => Set<ProviderEntityMapping>();
+
+    public DbSet<SyncRun> SyncRuns => Set<SyncRun>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,6 +55,26 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
             builder.HasOne<Season>().WithMany().HasForeignKey(fixture => fixture.SeasonId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<Team>().WithMany().HasForeignKey(fixture => fixture.HomeTeamId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<Team>().WithMany().HasForeignKey(fixture => fixture.AwayTeamId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ProviderEntityMapping>(builder =>
+        {
+            builder.ToTable("provider_entity_mappings", "acquisition");
+            builder.HasKey(mapping => mapping.Id);
+            builder.Property(mapping => mapping.Provider).HasMaxLength(50).IsRequired();
+            builder.Property(mapping => mapping.ResourceType).HasMaxLength(50).IsRequired();
+            builder.Property(mapping => mapping.ExternalId).HasMaxLength(100).IsRequired();
+            builder.HasIndex(mapping => new { mapping.Provider, mapping.ResourceType, mapping.ExternalId }).IsUnique();
+        });
+
+        modelBuilder.Entity<SyncRun>(builder =>
+        {
+            builder.ToTable("sync_runs", "acquisition");
+            builder.HasKey(run => run.Id);
+            builder.Property(run => run.Provider).HasMaxLength(50).IsRequired();
+            builder.Property(run => run.Status).HasMaxLength(20).IsRequired();
+            builder.Property(run => run.ErrorCode).HasMaxLength(100);
+            builder.HasIndex(run => run.RequestedAt);
         });
     }
 }
