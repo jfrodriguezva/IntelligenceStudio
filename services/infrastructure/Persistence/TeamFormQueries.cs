@@ -14,8 +14,16 @@ public sealed class TeamFormQueries(MisDbContext database) : ITeamFormQueries
 
         async Task<TeamFormSummary> GetAsync(Guid teamId)
         {
+            var cutoff = fixture.KickoffUtc;
             var name = await database.Teams.Where(team => team.Id == teamId).Select(team => team.Name).SingleAsync(cancellationToken);
-            var fixtures = await database.Fixtures.AsNoTracking().Where(item => (item.HomeTeamId == teamId || item.AwayTeamId == teamId) && item.Status == FixtureStatus.Finished && item.RegulationHomeGoals != null).OrderByDescending(item => item.KickoffUtc).Take(5).ToListAsync(cancellationToken);
+            var fixtures = await database.Fixtures.AsNoTracking()
+                .Where(item => (item.HomeTeamId == teamId || item.AwayTeamId == teamId)
+                    && item.Status == FixtureStatus.Finished
+                    && item.RegulationHomeGoals != null
+                    && (!cutoff.HasValue || item.KickoffUtc < cutoff))
+                .OrderByDescending(item => item.KickoffUtc)
+                .Take(5)
+                .ToListAsync(cancellationToken);
             var results = fixtures.Select(item => new { For = item.HomeTeamId == teamId ? item.RegulationHomeGoals!.Value : item.RegulationAwayGoals!.Value, Against = item.HomeTeamId == teamId ? item.RegulationAwayGoals!.Value : item.RegulationHomeGoals!.Value }).ToArray();
             return new TeamFormSummary(name, results.Length, results.Count(result => result.For > result.Against), results.Count(result => result.For == result.Against), results.Count(result => result.For < result.Against), results.Sum(result => result.For), results.Sum(result => result.Against), results.Sum(result => result.For > result.Against ? 3 : result.For == result.Against ? 1 : 0));
         }
