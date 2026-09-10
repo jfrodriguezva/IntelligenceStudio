@@ -3,4 +3,13 @@
   <Folder Name="/services/api/">
     <Project Path="services/api/Mis.Api.csproj" />
   </Folder>
+  <Folder Name="/services/application/">
+    <Project Path="services/application/Mis.Application.csproj" />
+  </Folder>
+  <Folder Name="/services/domain/">
+    <Project Path="services/domain/Mis.Domain.csproj" />
+  </Folder>
+  <Folder Name="/services/infrastructure/">
+    <Project Path="services/infrastructure/Mis.Infrastructure.csproj" />
+  </Folder>
 </Solution>

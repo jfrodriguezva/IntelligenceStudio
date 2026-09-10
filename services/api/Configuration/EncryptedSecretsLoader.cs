@@ -12,8 +12,8 @@ public static class EncryptedSecretsLoader
 
     public static void AddIfPresent(ConfigurationManager configuration, string contentRootPath)
     {
-        var vaultPath = Path.Combine(contentRootPath, "secrets.enc.json");
-        if (!File.Exists(vaultPath))
+        var vaultPath = FindVaultPath(contentRootPath);
+        if (vaultPath is null)
         {
             return;
         }
@@ -65,6 +65,20 @@ public static class EncryptedSecretsLoader
         }
 
         configuration.AddJsonStream(new MemoryStream(plaintext, writable: false));
+    }
+
+    private static string? FindVaultPath(string contentRootPath)
+    {
+        for (var directory = new DirectoryInfo(contentRootPath); directory is not null; directory = directory.Parent)
+        {
+            var candidate = Path.Combine(directory.FullName, "secrets.enc.json");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
     private sealed record EncryptedSecretDocument(

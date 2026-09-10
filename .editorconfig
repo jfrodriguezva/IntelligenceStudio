@@ -1,0 +1,5 @@
+root = true
+
+[services/infrastructure/Persistence/Migrations/*.cs]
+# EF Core generates constant array arguments in migration metadata.
+dotnet_diagnostic.CA1861.severity = none
