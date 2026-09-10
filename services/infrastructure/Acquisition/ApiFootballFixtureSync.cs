@@ -58,6 +58,15 @@ public sealed class ApiFootballFixtureSync(HttpClient client, MisDbContext datab
                 AddMapping("fixture", fixtureExternalId, fixture.Id);
             }
 
+            var seasonsToTry = items
+                .Select(item => item.GetProperty("league").GetProperty("season").GetInt32())
+                .Append(DateTime.UtcNow.Year)
+                .Append(DateTime.UtcNow.Year - 1)
+                .Distinct()
+                .OrderDescending()
+                .ToArray();
+            await SynchronizeSquadAsync(mappedIds, seasonsToTry, cancellationToken);
+
             run.Complete(items.Length, DateTimeOffset.UtcNow);
             await database.SaveChangesAsync(cancellationToken);
             return new ManualFixtureSyncResult(run.Id, items.Length, run.Status);
@@ -140,8 +149,47 @@ public sealed class ApiFootballFixtureSync(HttpClient client, MisDbContext datab
         }
     }
 
+    private async Task SynchronizeSquadAsync(Dictionary<string, Guid> mappedIds, IReadOnlyCollection<int> seasons, CancellationToken token)
+    {
+        if (!mappedIds.TryGetValue("team:541", out var teamId)) return;
+
+        JsonElement[] responseItems = [];
+        foreach (var season in seasons)
+        {
+            using var response = await client.GetAsync($"players?team=541&season={season.ToString(CultureInfo.InvariantCulture)}", token);
+            if (!response.IsSuccessStatusCode) continue;
+            using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: token);
+            if (document is null || !document.RootElement.TryGetProperty("response", out var items) || items.ValueKind != JsonValueKind.Array) continue;
+            responseItems = items.EnumerateArray().Select(item => item.Clone()).ToArray();
+            if (responseItems.Length > 0) break;
+        }
+
+        if (responseItems.Length == 0) return;
+        var players = await database.Players.ToDictionaryAsync(player => player.Id, token);
+        var active = await database.SquadMemberships.Where(item => item.TeamId == teamId && item.ValidTo == null).Select(item => item.PlayerId).ToListAsync(token);
+        foreach (var item in responseItems)
+        {
+            var source = item.GetProperty("player");
+            var externalId = source.GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture);
+            var name = source.GetProperty("name").GetString()!;
+            Player player;
+            if (mappedIds.TryGetValue($"player:{externalId}", out var playerId) && players.TryGetValue(playerId, out var existing)) { player = existing; player.Rename(name); }
+            else { player = new Player(Guid.NewGuid(), name); database.Players.Add(player); players.Add(player.Id, player); database.ProviderEntityMappings.Add(new ProviderEntityMapping(Guid.NewGuid(), "api-football", "player", externalId, player.Id)); mappedIds[$"player:{externalId}"] = player.Id; }
+            if (active.Contains(player.Id)) continue;
+            var position = GetPosition(item);
+            database.SquadMemberships.Add(new SquadMembership(Guid.NewGuid(), player.Id, teamId, MapPosition(position), DateOnly.FromDateTime(DateTime.UtcNow)));
+            active.Add(player.Id);
+        }
+    }
+
     private static int? ParseInt(Dictionary<string, string> values, string key) => values.TryGetValue(key, out var value) && int.TryParse(value, CultureInfo.InvariantCulture, out var result) ? result : null;
     private static int? ParsePercent(Dictionary<string, string> values, string key) => values.TryGetValue(key, out var value) && int.TryParse(value?.TrimEnd('%'), CultureInfo.InvariantCulture, out var result) ? result : null;
+    private static FootballPosition MapPosition(string? value) => value switch { "Goalkeeper" => FootballPosition.Goalkeeper, "Defender" => FootballPosition.Defender, "Midfielder" => FootballPosition.Midfielder, _ => FootballPosition.Forward };
+    private static string? GetPosition(JsonElement item) =>
+        item.TryGetProperty("statistics", out var statistics) && statistics.ValueKind == JsonValueKind.Array && statistics.GetArrayLength() > 0 &&
+        statistics[0].TryGetProperty("games", out var games) && games.TryGetProperty("position", out var position)
+            ? position.GetString()
+            : null;
 
     private static int? ToNullableInt(JsonElement value) => value.ValueKind == JsonValueKind.Null ? null : value.GetInt32();
 

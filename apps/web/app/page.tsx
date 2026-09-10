@@ -1,4 +1,4 @@
-type Fixture = { id: string; competition: string; season: string; homeTeam: string; awayTeam: string; kickoffUtc: string | null; status: string; homeGoals: number | null; awayGoals: number | null };
+type Fixture = { id: string; competition: string; season: string; homeTeamId: string; homeTeam: string; awayTeamId: string; awayTeam: string; kickoffUtc: string | null; status: string; homeGoals: number | null; awayGoals: number | null };
 
 async function getFixtures(): Promise<Fixture[]> {
   const origin = process.env.MIS_API_ORIGIN ?? "http://localhost:5080";

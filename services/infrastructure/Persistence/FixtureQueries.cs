@@ -12,7 +12,7 @@ public sealed class FixtureQueries(MisDbContext database) : IFixtureQueries
                join home in database.Teams.AsNoTracking() on fixture.HomeTeamId equals home.Id
                join away in database.Teams.AsNoTracking() on fixture.AwayTeamId equals away.Id
                orderby fixture.KickoffUtc
-               select new FixtureSummary(fixture.Id, competition.Name, season.Label, home.Name, away.Name, fixture.KickoffUtc, fixture.Status.ToString(), fixture.RegulationHomeGoals, fixture.RegulationAwayGoals))
+               select new FixtureSummary(fixture.Id, competition.Name, season.Label, fixture.HomeTeamId, home.Name, fixture.AwayTeamId, away.Name, fixture.KickoffUtc, fixture.Status.ToString(), fixture.RegulationHomeGoals, fixture.RegulationAwayGoals))
             .Take(20)
             .ToListAsync(cancellationToken);
 
@@ -23,7 +23,7 @@ public sealed class FixtureQueries(MisDbContext database) : IFixtureQueries
          join home in database.Teams.AsNoTracking() on fixture.HomeTeamId equals home.Id
          join away in database.Teams.AsNoTracking() on fixture.AwayTeamId equals away.Id
          where fixture.Id == fixtureId
-         select new FixtureSummary(fixture.Id, competition.Name, season.Label, home.Name, away.Name, fixture.KickoffUtc, fixture.Status.ToString(), fixture.RegulationHomeGoals, fixture.RegulationAwayGoals))
+         select new FixtureSummary(fixture.Id, competition.Name, season.Label, fixture.HomeTeamId, home.Name, fixture.AwayTeamId, away.Name, fixture.KickoffUtc, fixture.Status.ToString(), fixture.RegulationHomeGoals, fixture.RegulationAwayGoals))
         .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<IReadOnlyList<TeamMatchStatisticSummary>> GetStatisticsAsync(Guid fixtureId, CancellationToken cancellationToken) =>
