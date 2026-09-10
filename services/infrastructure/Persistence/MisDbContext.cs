@@ -16,6 +16,7 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
     public DbSet<Player> Players => Set<Player>();
     public DbSet<SquadMembership> SquadMemberships => Set<SquadMembership>();
     public DbSet<MatchEvent> MatchEvents => Set<MatchEvent>();
+    public DbSet<TeamMatchStatistic> TeamMatchStatistics => Set<TeamMatchStatistic>();
 
     public DbSet<ProviderEntityMapping> ProviderEntityMappings => Set<ProviderEntityMapping>();
 
@@ -86,6 +87,15 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
             builder.HasIndex(matchEvent => new { matchEvent.FixtureId, matchEvent.Minute, matchEvent.Id });
             builder.HasOne<Fixture>().WithMany().HasForeignKey(matchEvent => matchEvent.FixtureId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<Player>().WithMany().HasForeignKey(matchEvent => matchEvent.PlayerId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TeamMatchStatistic>(builder =>
+        {
+            builder.ToTable("team_match_statistics");
+            builder.HasKey(statistic => statistic.Id);
+            builder.HasIndex(statistic => new { statistic.FixtureId, statistic.TeamId }).IsUnique();
+            builder.HasOne<Fixture>().WithMany().HasForeignKey(statistic => statistic.FixtureId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<Team>().WithMany().HasForeignKey(statistic => statistic.TeamId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ProviderEntityMapping>(builder =>
