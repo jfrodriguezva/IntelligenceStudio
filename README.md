@@ -14,6 +14,7 @@ The active architecture is Next.js, .NET 10, SQL Server, API-Football and a futu
 - [Execution phases](docs/product/execution-phases.md)
 - [Documentation index](docs/README.md)
 - [System context](docs/architecture/system-context.md) and [container view](docs/architecture/container-view.md)
+- [Clean Architecture rules](docs/architecture/clean-architecture.md)
 - [Module ownership and dependency rules](docs/architecture/module-boundaries.md)
 - [Domain model](docs/domain/domain-model.md), [ER model](docs/domain/er-model.md), and [invariants](docs/domain/invariants.md)
 - [Architecture decisions and decision backlog](docs/adr/README.md)
