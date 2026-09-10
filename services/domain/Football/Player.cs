@@ -15,4 +15,10 @@ public sealed class Player
     public Guid Id { get; private set; }
     public string DisplayName { get; private set; } = string.Empty;
     public DateOnly? BirthDate { get; private set; }
+
+    public void Rename(string displayName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+        DisplayName = displayName.Trim();
+    }
 }
