@@ -27,6 +27,7 @@ public sealed class ApiFootballFixtureSync(HttpClient client, MisDbContext datab
             var competitions = await database.Competitions.ToDictionaryAsync(competition => competition.Id, cancellationToken);
             var seasons = await database.Seasons.ToDictionaryAsync(season => season.Id, cancellationToken);
             var fixtures = await database.Fixtures.ToDictionaryAsync(fixture => fixture.Id, cancellationToken);
+            var statistics = await database.TeamMatchStatistics.ToDictionaryAsync(statistic => $"{statistic.FixtureId}:{statistic.TeamId}", cancellationToken);
 
             foreach (var item in items)
             {
@@ -46,6 +47,7 @@ public sealed class ApiFootballFixtureSync(HttpClient client, MisDbContext datab
                 {
                     fixture.ApplyStatus(status, kickoff);
                     fixture.RecordRegulationScore(ToNullableInt(score.GetProperty("home")), ToNullableInt(score.GetProperty("away")));
+                    if (status == FixtureStatus.Finished) await SynchronizeStatisticsAsync(fixture, fixtureExternalId, mappedIds, statistics, cancellationToken);
                     continue;
                 }
 
@@ -120,6 +122,26 @@ public sealed class ApiFootballFixtureSync(HttpClient client, MisDbContext datab
         using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: token) ?? throw new InvalidOperationException("Empty API-Football response.");
         return document.RootElement.GetProperty("response").EnumerateArray().Select(item => item.Clone()).ToArray();
     }
+
+    private async Task SynchronizeStatisticsAsync(Fixture fixture, string externalFixtureId, Dictionary<string, Guid> mappedIds, Dictionary<string, TeamMatchStatistic> statistics, CancellationToken token)
+    {
+        using var response = await client.GetAsync($"fixtures/statistics?fixture={externalFixtureId}", token);
+        if (!response.IsSuccessStatusCode) return;
+        using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: token);
+        if (document is null) return;
+        foreach (var item in document.RootElement.GetProperty("response").EnumerateArray())
+        {
+            var providerTeamId = item.GetProperty("team").GetProperty("id").GetInt32().ToString(CultureInfo.InvariantCulture);
+            if (!mappedIds.TryGetValue($"team:{providerTeamId}", out var teamId) || statistics.ContainsKey($"{fixture.Id}:{teamId}")) continue;
+            var values = item.GetProperty("statistics").EnumerateArray().ToDictionary(value => value.GetProperty("type").GetString()!, value => value.GetProperty("value").ToString());
+            var statistic = new TeamMatchStatistic(Guid.NewGuid(), fixture.Id, teamId, ParsePercent(values, "Ball Possession"), ParseInt(values, "Total Shots"), ParseInt(values, "Shots on Goal"), ParseInt(values, "Corner Kicks"));
+            database.TeamMatchStatistics.Add(statistic);
+            statistics.Add($"{fixture.Id}:{teamId}", statistic);
+        }
+    }
+
+    private static int? ParseInt(Dictionary<string, string> values, string key) => values.TryGetValue(key, out var value) && int.TryParse(value, CultureInfo.InvariantCulture, out var result) ? result : null;
+    private static int? ParsePercent(Dictionary<string, string> values, string key) => values.TryGetValue(key, out var value) && int.TryParse(value?.TrimEnd('%'), CultureInfo.InvariantCulture, out var result) ? result : null;
 
     private static int? ToNullableInt(JsonElement value) => value.ValueKind == JsonValueKind.Null ? null : value.GetInt32();
 
