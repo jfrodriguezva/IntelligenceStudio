@@ -1,5 +1,7 @@
 using Mis.Api.Contracts;
 using Mis.Api.Configuration;
+using Mis.Application.Acquisition;
+using Mis.Infrastructure.Acquisition;
 using Mis.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,10 +18,25 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 builder.Services.AddDbContext<MisDbContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
+builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["FootballData:ApiFootball:BaseUrl"]!);
+    client.DefaultRequestHeaders.Add("x-apisports-key", builder.Configuration["FootballData:ApiFootball:ApiKey"]!);
+});
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var database = scope.ServiceProvider.GetRequiredService<MisDbContext>();
+    if (!await database.Fixtures.AnyAsync())
+    {
+        await scope.ServiceProvider.GetRequiredService<IManualFixtureSync>().ExecuteAsync(CancellationToken.None);
+    }
+}
 
 app.MapGet("/api/v1/system/status", () =>
     Results.Ok(new SystemStatusResponse("Madrid Intelligence Studio", "development-foundation")))
