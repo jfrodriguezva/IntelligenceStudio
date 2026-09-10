@@ -21,6 +21,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 builder.Services.AddDbContext<MisDbContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<IFixtureQueries, FixtureQueries>();
 builder.Services.AddScoped<ITeamFormQueries, TeamFormQueries>();
+builder.Services.AddScoped<ISquadQueries, SquadQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
 {
@@ -74,6 +75,11 @@ app.MapGet("/api/v1/fixtures/{fixtureId:guid}/statistics", async (Guid fixtureId
     Results.Ok(await queries.GetStatisticsAsync(fixtureId, token)))
     .WithName("GetFixtureStatistics")
     .Produces<IReadOnlyList<TeamMatchStatisticSummary>>();
+
+app.MapGet("/api/v1/teams/{teamId:guid}/squad", async (Guid teamId, ISquadQueries queries, CancellationToken token) =>
+    Results.Ok(await queries.GetForTeamAsync(teamId, token)))
+    .WithName("GetTeamSquad")
+    .Produces<IReadOnlyList<SquadPlayerSummary>>();
 
 app.MapPost("/api/v1/acquisition/fixtures/refresh", async (HttpRequest request, IConfiguration configuration, IManualFixtureSync sync, CancellationToken token) =>
 {
