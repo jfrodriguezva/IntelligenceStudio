@@ -1,6 +1,7 @@
 using Mis.Api.Contracts;
 using Mis.Api.Configuration;
 using Mis.Application.Acquisition;
+using Mis.Application.Football;
 using Mis.Infrastructure.Acquisition;
 using Mis.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 }
 
 builder.Services.AddDbContext<MisDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddScoped<IFixtureQueries, FixtureQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
 {
@@ -45,5 +47,10 @@ app.MapGet("/api/v1/system/status", () =>
 
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
+
+app.MapGet("/api/v1/fixtures", async (IFixtureQueries queries, CancellationToken token) =>
+    Results.Ok(await queries.GetRecentAndUpcomingAsync(token)))
+    .WithName("GetFixtures")
+    .Produces<IReadOnlyList<FixtureSummary>>();
 
 app.Run();
