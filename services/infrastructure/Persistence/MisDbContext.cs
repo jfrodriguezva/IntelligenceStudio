@@ -13,6 +13,9 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
     public DbSet<Team> Teams => Set<Team>();
 
     public DbSet<Fixture> Fixtures => Set<Fixture>();
+    public DbSet<Player> Players => Set<Player>();
+    public DbSet<SquadMembership> SquadMemberships => Set<SquadMembership>();
+    public DbSet<MatchEvent> MatchEvents => Set<MatchEvent>();
 
     public DbSet<ProviderEntityMapping> ProviderEntityMappings => Set<ProviderEntityMapping>();
 
@@ -55,6 +58,34 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
             builder.HasOne<Season>().WithMany().HasForeignKey(fixture => fixture.SeasonId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<Team>().WithMany().HasForeignKey(fixture => fixture.HomeTeamId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<Team>().WithMany().HasForeignKey(fixture => fixture.AwayTeamId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Player>(builder =>
+        {
+            builder.ToTable("players");
+            builder.HasKey(player => player.Id);
+            builder.Property(player => player.DisplayName).HasMaxLength(200).IsRequired();
+        });
+
+        modelBuilder.Entity<SquadMembership>(builder =>
+        {
+            builder.ToTable("squad_memberships");
+            builder.HasKey(membership => membership.Id);
+            builder.Property(membership => membership.Position).HasConversion<string>().HasMaxLength(20).IsRequired();
+            builder.HasIndex(membership => new { membership.PlayerId, membership.TeamId, membership.ValidFrom }).IsUnique();
+            builder.HasOne<Player>().WithMany().HasForeignKey(membership => membership.PlayerId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<Team>().WithMany().HasForeignKey(membership => membership.TeamId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MatchEvent>(builder =>
+        {
+            builder.ToTable("match_events");
+            builder.HasKey(matchEvent => matchEvent.Id);
+            builder.Property(matchEvent => matchEvent.Type).HasConversion<string>().HasMaxLength(20).IsRequired();
+            builder.Property(matchEvent => matchEvent.Note).HasMaxLength(1000);
+            builder.HasIndex(matchEvent => new { matchEvent.FixtureId, matchEvent.Minute, matchEvent.Id });
+            builder.HasOne<Fixture>().WithMany().HasForeignKey(matchEvent => matchEvent.FixtureId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<Player>().WithMany().HasForeignKey(matchEvent => matchEvent.PlayerId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ProviderEntityMapping>(builder =>
