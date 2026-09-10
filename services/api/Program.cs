@@ -20,6 +20,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 builder.Services.AddDbContext<MisDbContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<IFixtureQueries, FixtureQueries>();
+builder.Services.AddScoped<ITeamFormQueries, TeamFormQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
 {
@@ -63,6 +64,11 @@ app.MapGet("/api/v1/fixtures/{fixtureId:guid}", async (Guid fixtureId, IFixtureQ
     .WithName("GetFixtureById")
     .Produces<FixtureSummary>()
     .Produces(StatusCodes.Status404NotFound);
+
+app.MapGet("/api/v1/fixtures/{fixtureId:guid}/form", async (Guid fixtureId, ITeamFormQueries queries, CancellationToken token) =>
+    Results.Ok(await queries.GetForFixtureAsync(fixtureId, token)))
+    .WithName("GetFixtureTeamForm")
+    .Produces<IReadOnlyList<TeamFormSummary>>();
 
 app.MapPost("/api/v1/acquisition/fixtures/refresh", async (HttpRequest request, IConfiguration configuration, IManualFixtureSync sync, CancellationToken token) =>
 {
