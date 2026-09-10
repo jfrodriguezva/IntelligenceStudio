@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import "./styles.css";
 
 export const metadata: Metadata = {
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="es-MX">
-      <body>{children}</body>
+      <body><header><Link className="brand" href="/">MIS</Link><nav><Link href="/match-center">Match Center</Link><Link href="/tactical-board">Pizarra</Link><Link href="/analysis">Análisis</Link><Link href="/evidence">Evidencia</Link><Link href="/tactical-library">Biblioteca</Link></nav></header>{children}</body>
     </html>
   );
 }

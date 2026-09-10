@@ -8,6 +8,9 @@
 * { box-sizing: border-box; }
 
 body { margin: 0; }
+header { align-items: center; border-bottom: 1px solid #334155; display: flex; gap: 2rem; justify-content: space-between; padding: 1rem 1.5rem; }
+header nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+.brand { color: #fff; font-weight: 800; text-decoration: none; }
 
 main { max-width: 52rem; margin: 0 auto; padding: 6rem 1.5rem; }
 
