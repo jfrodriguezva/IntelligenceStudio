@@ -53,4 +53,13 @@ app.MapGet("/api/v1/fixtures", async (IFixtureQueries queries, CancellationToken
     .WithName("GetFixtures")
     .Produces<IReadOnlyList<FixtureSummary>>();
 
+app.MapGet("/api/v1/fixtures/{fixtureId:guid}", async (Guid fixtureId, IFixtureQueries queries, CancellationToken token) =>
+{
+    var fixture = await queries.GetByIdAsync(fixtureId, token);
+    return fixture is null ? Results.NotFound() : Results.Ok(fixture);
+})
+    .WithName("GetFixtureById")
+    .Produces<FixtureSummary>()
+    .Produces(StatusCodes.Status404NotFound);
+
 app.Run();

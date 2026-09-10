@@ -13,7 +13,8 @@ export default async function HomePage() {
       <p className="eyebrow">Madrid, hagámoslo real</p>
       <h1>Madrid Intelligence Studio</h1>
       <p>Partidos recientes y próximos del Match Center.</p>
-      {fixtures.length === 0 ? <p>No hay fixtures disponibles todavía.</p> : <ul>{fixtures.map((fixture) => <li key={fixture.id}><strong>{fixture.homeTeam} {fixture.homeGoals ?? ""} — {fixture.awayGoals ?? ""} {fixture.awayTeam}</strong><br />{fixture.competition} · {fixture.kickoffUtc ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(new Date(fixture.kickoffUtc)) : "Fecha pendiente"} · {fixture.status}</li>)}</ul>}
+      <p><a href="/match-center">Abrir Match Center</a></p>
+      {fixtures.length === 0 ? <p>No hay fixtures disponibles todavía.</p> : <ul>{fixtures.slice(0, 5).map((fixture) => <li key={fixture.id}><strong>{fixture.homeTeam} {fixture.homeGoals ?? ""} — {fixture.awayGoals ?? ""} {fixture.awayTeam}</strong><br />{fixture.competition} · {fixture.kickoffUtc ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(new Date(fixture.kickoffUtc)) : "Fecha pendiente"} · {fixture.status}</li>)}</ul>}
     </main>
   );
 }

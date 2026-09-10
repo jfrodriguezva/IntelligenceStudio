@@ -26,4 +26,12 @@ public sealed class SyncRun
         CompletedAt = completedAt;
         Status = "Succeeded";
     }
+
+    public void Fail(string errorCode, DateTimeOffset completedAt)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(errorCode);
+        ErrorCode = errorCode.Trim()[..Math.Min(errorCode.Trim().Length, 100)];
+        CompletedAt = completedAt;
+        Status = "Failed";
+    }
 }

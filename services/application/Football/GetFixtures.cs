@@ -3,6 +3,8 @@ namespace Mis.Application.Football;
 public interface IFixtureQueries
 {
     Task<IReadOnlyList<FixtureSummary>> GetRecentAndUpcomingAsync(CancellationToken cancellationToken);
+
+    Task<FixtureSummary?> GetByIdAsync(Guid fixtureId, CancellationToken cancellationToken);
 }
 
 public sealed record FixtureSummary(
