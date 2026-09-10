@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 EncryptedSecretsLoader.AddIfPresent(builder.Configuration, builder.Environment.ContentRootPath);
 
 builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi();
 var connectionString = builder.Configuration.GetConnectionString("MisDatabase");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
@@ -29,6 +30,7 @@ builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(clien
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.MapOpenApi();
 
 if (app.Environment.IsDevelopment())
 {
@@ -61,5 +63,16 @@ app.MapGet("/api/v1/fixtures/{fixtureId:guid}", async (Guid fixtureId, IFixtureQ
     .WithName("GetFixtureById")
     .Produces<FixtureSummary>()
     .Produces(StatusCodes.Status404NotFound);
+
+app.MapPost("/api/v1/acquisition/fixtures/refresh", async (HttpRequest request, IConfiguration configuration, IManualFixtureSync sync, CancellationToken token) =>
+{
+    var suppliedKey = request.Headers[AdminRefreshAuthorization.HeaderName].ToString();
+    var configuredKey = configuration["AdminAccess:RefreshKey"];
+    if (!AdminRefreshAuthorization.IsAuthorized(suppliedKey, configuredKey)) return Results.Unauthorized();
+    return Results.Ok(await sync.ExecuteAsync(token));
+})
+    .WithName("RefreshFixtures")
+    .Produces<ManualFixtureSyncResult>()
+    .Produces(StatusCodes.Status401Unauthorized);
 
 app.Run();

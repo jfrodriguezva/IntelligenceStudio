@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RefreshFixtures } from "./refresh-fixtures";
 
 type Fixture = { id: string; competition: string; season: string; homeTeam: string; awayTeam: string; kickoffUtc: string | null; status: string; homeGoals: number | null; awayGoals: number | null };
 
@@ -20,6 +21,7 @@ export default async function MatchCenterPage({ searchParams }: { searchParams: 
     <nav className="filters"><Link href="/match-center">Todos</Link>{["Finished", "Scheduled", "Live"].map((status) => <Link key={status} href={`/match-center?status=${status}`}>{status}</Link>)}</nav>
     <nav className="filters">{competitions.map((competition) => <Link key={competition} href={`/match-center?competition=${encodeURIComponent(competition)}`}>{competition}</Link>)}</nav>
     <p>{filtered.length} partidos disponibles.</p>
+    <RefreshFixtures />
     <ul>{filtered.map((fixture) => <li key={fixture.id}><Link href={`/match-center/${fixture.id}`}><strong>{fixture.homeTeam} {fixture.homeGoals ?? ""} — {fixture.awayGoals ?? ""} {fixture.awayTeam}</strong><br />{fixture.competition} · {fixture.kickoffUtc ? new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(new Date(fixture.kickoffUtc)) : "Fecha pendiente"} · {fixture.status}</Link></li>)}</ul>
   </main>;
 }
