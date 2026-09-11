@@ -22,6 +22,7 @@ builder.Services.AddDbContext<MisDbContext>(options => options.UseSqlServer(conn
 builder.Services.AddScoped<IFixtureQueries, FixtureQueries>();
 builder.Services.AddScoped<ITeamFormQueries, TeamFormQueries>();
 builder.Services.AddScoped<ISquadQueries, SquadQueries>();
+builder.Services.AddScoped<IMatchEventQueries, MatchEventQueries>();
 builder.Services.AddScoped<ISyncRunQueries, SyncRunQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
@@ -76,6 +77,11 @@ app.MapGet("/api/v1/fixtures/{fixtureId:guid}/statistics", async (Guid fixtureId
     Results.Ok(await queries.GetStatisticsAsync(fixtureId, token)))
     .WithName("GetFixtureStatistics")
     .Produces<IReadOnlyList<TeamMatchStatisticSummary>>();
+
+app.MapGet("/api/v1/fixtures/{fixtureId:guid}/events", async (Guid fixtureId, IMatchEventQueries queries, CancellationToken token) =>
+    Results.Ok(await queries.GetForFixtureAsync(fixtureId, token)))
+    .WithName("GetFixtureEvents")
+    .Produces<IReadOnlyList<MatchEventSummary>>();
 
 app.MapGet("/api/v1/teams/{teamId:guid}/squad", async (Guid teamId, ISquadQueries queries, CancellationToken token) =>
     Results.Ok(await queries.GetForTeamAsync(teamId, token)))

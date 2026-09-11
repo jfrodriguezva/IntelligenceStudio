@@ -47,7 +47,11 @@ public sealed class ApiFootballFixtureSync(HttpClient client, MisDbContext datab
                 {
                     fixture.ApplyStatus(status, kickoff);
                     fixture.RecordRegulationScore(ToNullableInt(score.GetProperty("home")), ToNullableInt(score.GetProperty("away")));
-                    if (status == FixtureStatus.Finished) await SynchronizeStatisticsAsync(fixture, fixtureExternalId, mappedIds, statistics, cancellationToken);
+                    if (status == FixtureStatus.Finished)
+                    {
+                        await SynchronizeStatisticsAsync(fixture, fixtureExternalId, mappedIds, statistics, cancellationToken);
+                        await SynchronizeEventsAsync(fixture, fixtureExternalId, mappedIds, cancellationToken);
+                    }
                     continue;
                 }
 
@@ -146,6 +150,31 @@ public sealed class ApiFootballFixtureSync(HttpClient client, MisDbContext datab
             var statistic = new TeamMatchStatistic(Guid.NewGuid(), fixture.Id, teamId, ParsePercent(values, "Ball Possession"), ParseInt(values, "Total Shots"), ParseInt(values, "Shots on Goal"), ParseInt(values, "Corner Kicks"));
             database.TeamMatchStatistics.Add(statistic);
             statistics.Add($"{fixture.Id}:{teamId}", statistic);
+        }
+    }
+
+    private async Task SynchronizeEventsAsync(Fixture fixture, string externalFixtureId, Dictionary<string, Guid> mappedIds, CancellationToken token)
+    {
+        using var response = await client.GetAsync($"fixtures/events?fixture={externalFixtureId}", token);
+        if (!response.IsSuccessStatusCode) return;
+        using var document = await response.Content.ReadFromJsonAsync<JsonDocument>(cancellationToken: token);
+        if (document is null || !document.RootElement.TryGetProperty("response", out var sourceEvents)) return;
+
+        var index = 0;
+        foreach (var source in sourceEvents.EnumerateArray())
+        {
+            var externalId = $"{externalFixtureId}:{index++}";
+            if (mappedIds.ContainsKey($"event:{externalId}")) continue;
+            var player = source.GetProperty("player");
+            Guid? playerId = null;
+            if (player.TryGetProperty("id", out var providerPlayerId) && providerPlayerId.ValueKind != JsonValueKind.Null && mappedIds.TryGetValue($"player:{providerPlayerId.GetInt32().ToString(CultureInfo.InvariantCulture)}", out var mappedPlayerId)) playerId = mappedPlayerId;
+            var type = source.GetProperty("type").GetString() switch { "Goal" => MatchEventType.Goal, "Card" => MatchEventType.Card, "subst" => MatchEventType.Substitution, _ => MatchEventType.Observation };
+            var minute = source.GetProperty("time").GetProperty("elapsed").GetInt32();
+            var note = source.TryGetProperty("detail", out var detail) ? detail.GetString() : null;
+            var matchEvent = new MatchEvent(Guid.NewGuid(), fixture.Id, playerId, type, minute, note);
+            database.MatchEvents.Add(matchEvent);
+            database.ProviderEntityMappings.Add(new ProviderEntityMapping(Guid.NewGuid(), "api-football", "event", externalId, matchEvent.Id));
+            mappedIds[$"event:{externalId}"] = matchEvent.Id;
         }
     }
 
