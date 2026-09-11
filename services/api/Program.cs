@@ -22,6 +22,7 @@ builder.Services.AddDbContext<MisDbContext>(options => options.UseSqlServer(conn
 builder.Services.AddScoped<IFixtureQueries, FixtureQueries>();
 builder.Services.AddScoped<ITeamFormQueries, TeamFormQueries>();
 builder.Services.AddScoped<ISquadQueries, SquadQueries>();
+builder.Services.AddScoped<ISyncRunQueries, SyncRunQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
 {
@@ -80,6 +81,11 @@ app.MapGet("/api/v1/teams/{teamId:guid}/squad", async (Guid teamId, ISquadQuerie
     Results.Ok(await queries.GetForTeamAsync(teamId, token)))
     .WithName("GetTeamSquad")
     .Produces<IReadOnlyList<SquadPlayerSummary>>();
+
+app.MapGet("/api/v1/acquisition/sync-runs", async (int? take, ISyncRunQueries queries, CancellationToken token) =>
+    Results.Ok(await queries.GetRecentAsync(take ?? 10, token)))
+    .WithName("GetRecentSyncRuns")
+    .Produces<IReadOnlyList<SyncRunSummary>>();
 
 app.MapPost("/api/v1/acquisition/fixtures/refresh", async (HttpRequest request, IConfiguration configuration, IManualFixtureSync sync, CancellationToken token) =>
 {
