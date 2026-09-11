@@ -14,3 +14,4 @@ All documents are Phase Zero design artifacts dated 2026-09-08. AGENTS.md takes 
 | Security | [Security model](security/security-model.md) |
 | Decisions | [ADRs and pending decisions](adr/README.md) |
 | Review | [Phase Zero review and requirement coverage](architecture/phase-zero-review.md) |
+| Operations | [SQL Server backup and recovery runbook](operations/sql-server-runbook.md) |
