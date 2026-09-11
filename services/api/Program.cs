@@ -53,10 +53,10 @@ app.MapGet("/api/v1/system/status", () =>
 app.MapHealthChecks("/health/live");
 app.MapHealthChecks("/health/ready");
 
-app.MapGet("/api/v1/fixtures", async (IFixtureQueries queries, CancellationToken token) =>
-    Results.Ok(await queries.GetRecentAndUpcomingAsync(token)))
+app.MapGet("/api/v1/fixtures", async (string? competition, string? season, string? status, DateOnly? from, DateOnly? to, int? page, int? pageSize, IFixtureQueries queries, CancellationToken token) =>
+    Results.Ok(await queries.SearchAsync(new FixtureSearch(competition, season, status, from, to, page ?? 1, pageSize ?? 20), token)))
     .WithName("GetFixtures")
-    .Produces<IReadOnlyList<FixtureSummary>>();
+    .Produces<FixturePage>();
 
 app.MapGet("/api/v1/fixtures/{fixtureId:guid}", async (Guid fixtureId, IFixtureQueries queries, CancellationToken token) =>
 {
