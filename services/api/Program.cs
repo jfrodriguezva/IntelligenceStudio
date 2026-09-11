@@ -23,6 +23,7 @@ builder.Services.AddScoped<IFixtureQueries, FixtureQueries>();
 builder.Services.AddScoped<ITeamFormQueries, TeamFormQueries>();
 builder.Services.AddScoped<ISquadQueries, SquadQueries>();
 builder.Services.AddScoped<IMatchEventQueries, MatchEventQueries>();
+builder.Services.AddScoped<IMatchNoteService, MatchNoteService>();
 builder.Services.AddScoped<ISyncRunQueries, SyncRunQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
@@ -82,6 +83,26 @@ app.MapGet("/api/v1/fixtures/{fixtureId:guid}/events", async (Guid fixtureId, IM
     Results.Ok(await queries.GetForFixtureAsync(fixtureId, token)))
     .WithName("GetFixtureEvents")
     .Produces<IReadOnlyList<MatchEventSummary>>();
+
+app.MapGet("/api/v1/fixtures/{fixtureId:guid}/notes", async (Guid fixtureId, HttpRequest request, IConfiguration configuration, IMatchNoteService notes, CancellationToken token) =>
+{
+    if (!AdminRefreshAuthorization.IsAuthorized(request.Headers[AdminRefreshAuthorization.HeaderName].ToString(), configuration["AdminAccess:RefreshKey"])) return Results.Unauthorized();
+    return Results.Ok(await notes.GetAsync(fixtureId, token));
+})
+    .WithName("GetMatchNotes")
+    .Produces<IReadOnlyList<MatchNoteSummary>>()
+    .Produces(StatusCodes.Status401Unauthorized);
+
+app.MapPost("/api/v1/fixtures/{fixtureId:guid}/notes", async (Guid fixtureId, CreateMatchNoteRequest request, HttpRequest httpRequest, IConfiguration configuration, IMatchNoteService notes, CancellationToken token) =>
+{
+    if (!AdminRefreshAuthorization.IsAuthorized(httpRequest.Headers[AdminRefreshAuthorization.HeaderName].ToString(), configuration["AdminAccess:RefreshKey"])) return Results.Unauthorized();
+    try { return Results.Created($"/api/v1/fixtures/{fixtureId}/notes", await notes.CreateAsync(fixtureId, request, token)); }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
+})
+    .WithName("CreateMatchNote")
+    .Produces<MatchNoteSummary>(StatusCodes.Status201Created)
+    .Produces(StatusCodes.Status401Unauthorized)
+    .Produces(StatusCodes.Status404NotFound);
 
 app.MapGet("/api/v1/teams/{teamId:guid}/squad", async (Guid teamId, ISquadQueries queries, CancellationToken token) =>
     Results.Ok(await queries.GetForTeamAsync(teamId, token)))
