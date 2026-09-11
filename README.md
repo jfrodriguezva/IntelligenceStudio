@@ -4,7 +4,7 @@ Madrid Intelligence Studio (MIS) is a football intelligence product, initially f
 
 ## Current status
 
-Phase Zero is documented. Phase One has started with the v0.1 local foundation: a .NET API health/status surface, a Next.js web shell, SQL Server local configuration, CI definition and safe configuration templates. Football persistence and the provider integration are not implemented yet.
+Phase Zero is documented. The local foundation includes SQL Server persistence, protected manual API-Football synchronization, Match Center filters, statistics, squad data, events and a Next.js portal. Tactical, evidence and prediction modules are being expanded in vertical slices.
 
 The active architecture is Next.js, .NET 10, SQL Server, API-Football and a future Python ML runtime. The documentation describes intended behavior, not implemented capabilities.
 
@@ -44,9 +44,9 @@ Write local values in `secrets.local.json`, set `MIS_SECRETS_KEY` outside the re
 Run the current checks with:
 
 ```powershell
-dotnet build services/api/Mis.Api.csproj --configuration Release
-pnpm --dir apps/web typecheck
-pnpm --dir apps/web lint
+dotnet build MadridIntelligenceStudio.slnx --configuration Release
+dotnet test tests/Mis.Domain.Tests/Mis.Domain.Tests.csproj --configuration Release
+node apps/web/node_modules/typescript/bin/tsc --noEmit --project apps/web/tsconfig.json
 pnpm --dir apps/web build
 ```
 
