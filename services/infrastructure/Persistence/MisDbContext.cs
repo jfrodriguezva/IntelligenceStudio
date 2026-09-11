@@ -16,6 +16,7 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
     public DbSet<Player> Players => Set<Player>();
     public DbSet<SquadMembership> SquadMemberships => Set<SquadMembership>();
     public DbSet<MatchEvent> MatchEvents => Set<MatchEvent>();
+    public DbSet<MatchNote> MatchNotes => Set<MatchNote>();
     public DbSet<TeamMatchStatistic> TeamMatchStatistics => Set<TeamMatchStatistic>();
 
     public DbSet<ProviderEntityMapping> ProviderEntityMappings => Set<ProviderEntityMapping>();
@@ -87,6 +88,16 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
             builder.HasIndex(matchEvent => new { matchEvent.FixtureId, matchEvent.Minute, matchEvent.Id });
             builder.HasOne<Fixture>().WithMany().HasForeignKey(matchEvent => matchEvent.FixtureId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<Player>().WithMany().HasForeignKey(matchEvent => matchEvent.PlayerId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MatchNote>(builder =>
+        {
+            builder.ToTable("match_notes");
+            builder.HasKey(note => note.Id);
+            builder.Property(note => note.Tag).HasMaxLength(40).IsRequired();
+            builder.Property(note => note.Text).HasMaxLength(2000).IsRequired();
+            builder.HasIndex(note => new { note.FixtureId, note.Minute, note.Id });
+            builder.HasOne<Fixture>().WithMany().HasForeignKey(note => note.FixtureId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<TeamMatchStatistic>(builder =>
