@@ -15,7 +15,7 @@ flowchart LR
 | Fase | Versiones | Resultado que habilita | Condición para avanzar |
 |---|---|---|---|
 | 0. Arquitectura | — | Límites, modelo de dominio, contratos, riesgos y backlog coherentes | Revisión crítica completada; no hay contradicciones que bloqueen el primer slice |
-| 1. Centro de partidos | v0.1 | Un analista importa datos permitidos y abre un partido en la web | Flujo API-Football → PostgreSQL → API → UI probado; importación idempotente, observable y segura |
+| 1. Centro de partidos | v0.1 | Un analista importa datos permitidos y abre un partido en la web | Flujo API-Football → SQL Server → API → UI probado; importación idempotente, observable y segura |
 | 2. Datos y forma | v0.2 | Estadísticas y forma reciente con procedencia | Fórmulas versionadas, datos incompletos visibles y métricas sin fuga temporal |
 | 3. Predicción y evaluación | v0.3–v0.5 | Probabilidades, simulaciones y comparación honesta con resultados | Snapshots/modelos inmutables; backtest cronológico, calibración y evaluación reproducible |
 | 4. Inteligencia de mercado | v0.6 | Comparación entre modelo y cuotas | Cuotas con tiempo/mercado definidos; evaluaciones pasadas no se modifican |
@@ -24,19 +24,19 @@ flowchart LR
 
 ## Fase 0 — Arquitectura y producto
 
-Completada. Define el sistema como monolito modular en .NET, PostgreSQL como sistema de registro y una frontera privada para Python cuando exista modelado. La evidencia del diseño está en el [índice de documentación](../README.md) y la revisión está en [Phase Zero review](../architecture/phase-zero-review.md).
+Completada. Define el sistema como monolito modular en .NET, SQL Server como sistema de registro y una frontera privada para Python cuando exista modelado. La decisión vigente está en [ADR-017](../adr/017-sql-server-and-manual-refresh.md).
 
 ## Fase 1 — Match Center Foundation
 
 Es la única fase de implementación que debe comenzar ahora. Su objetivo es demostrar un flujo completo, no crear una maqueta del producto final.
 
-1. Crear la base mínima del monorepo: API .NET, web Next.js, PostgreSQL local, configuración segura y comandos documentados.
+1. Crear la base mínima del monorepo: API .NET, web Next.js, SQL Server local, configuración segura y comandos documentados.
 2. Persistir Football y Data Acquisition con IDs canónicos, mapeos de proveedor, ejecuciones de sincronización y observaciones inmutables.
 3. Validar la cobertura, cuota y derechos de API-Football antes de capturar datos reales.
 4. Importar un alcance acotado de competiciones, temporadas y partidos del equipo configurado, incluyendo rivales necesarios.
 5. Exponer contratos REST/OpenAPI para lista, detalle de fixture y seguimiento de sincronización.
 6. Mostrar lista de partidos y Match Center básico con estado, marcador por periodo y frescura de los datos.
-7. Validar arquitectura, PostgreSQL real, UI, recorrido E2E, observabilidad y una sincronización real permitida.
+7. Validar arquitectura, SQL Server real, UI, recorrido E2E, observabilidad y una sincronización real permitida.
 
 Las tareas MC-01 a MC-08 y sus criterios de aceptación están en el [backlog detallado](implementation-backlog.md).
 

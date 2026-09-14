@@ -5,13 +5,14 @@ Accepted records describe project design decisions, not implemented behavior. AD
 | ADR | Decision | Status |
 |---|---|---|
 | [001](001-modular-monolith.md) | Modular monolith and vertical slices | Accepted |
-| [002](002-postgresql.md) | PostgreSQL system of record | Accepted |
+| [002](002-postgresql.md) | PostgreSQL system of record | Superseded by ADR-017 |
 | [003](003-python-ml-runtime.md) | Separate Python ML runtime | Accepted |
 | [004](004-provider-abstraction.md) | Football provider abstraction | Accepted |
 | [005](005-prediction-immutability.md) | Immutable prediction results | Accepted |
 | [006](006-feature-versioning.md) | Feature versioning and temporal evidence | Accepted |
 | [007](007-ai-provider-abstraction.md) | AI provider abstraction and execution provenance | Accepted |
 | [008](008-ingestion-history-and-transactions.md) | Current projections plus observations and local transactions | Accepted |
+| [017](017-sql-server-and-manual-refresh.md) | SQL Server system of record and manual data refresh | Accepted |
 
 ## Decision backlog
 

@@ -1,6 +1,8 @@
 ﻿# ADR-002: PostgreSQL as system of record
 
-Date: 2026-09-08. Status: Accepted. Authority: AGENTS.md sections 4.2 and 4.4.
+Date: 2026-09-08. Status: Superseded by ADR-017. Authority: AGENTS.md sections 4.2 and 4.4.
+
+> The active database and refresh decision is [ADR-017](017-sql-server-and-manual-refresh.md). This record remains as Phase Zero history.
 
 ## Context and alternatives
 
