@@ -25,6 +25,8 @@ builder.Services.AddScoped<ISquadQueries, SquadQueries>();
 builder.Services.AddScoped<IMatchEventQueries, MatchEventQueries>();
 builder.Services.AddScoped<IMatchNoteService, MatchNoteService>();
 builder.Services.AddScoped<ITacticalSceneService, TacticalSceneService>();
+builder.Services.AddSingleton<IEvidenceStorage>(_ => new LocalEvidenceStorage(Path.Combine(builder.Environment.ContentRootPath, ".local-data", "evidence")));
+builder.Services.AddScoped<IEvidenceAssetService, EvidenceAssetService>();
 builder.Services.AddScoped<ISyncRunQueries, SyncRunQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
@@ -123,6 +125,34 @@ app.MapPost("/api/v1/fixtures/{fixtureId:guid}/tactical-scenes", async (Guid fix
 })
     .WithName("CreateTacticalScene")
     .Produces<TacticalSceneSummary>(StatusCodes.Status201Created)
+    .Produces(StatusCodes.Status400BadRequest)
+    .Produces(StatusCodes.Status401Unauthorized)
+    .Produces(StatusCodes.Status404NotFound);
+
+app.MapGet("/api/v1/fixtures/{fixtureId:guid}/evidence", async (Guid fixtureId, HttpRequest request, IConfiguration configuration, IEvidenceAssetService evidence, CancellationToken token) =>
+{
+    if (!AdminRefreshAuthorization.IsAuthorized(request.Headers[AdminRefreshAuthorization.HeaderName].ToString(), configuration["AdminAccess:RefreshKey"])) return Results.Unauthorized();
+    return Results.Ok(await evidence.GetForFixtureAsync(fixtureId, token));
+})
+    .WithName("GetFixtureEvidence")
+    .Produces<IReadOnlyList<EvidenceAssetSummary>>()
+    .Produces(StatusCodes.Status401Unauthorized);
+
+app.MapPost("/api/v1/fixtures/{fixtureId:guid}/evidence", async (Guid fixtureId, HttpRequest request, IFormFile? file, int? minute, string? description, IConfiguration configuration, IEvidenceAssetService evidence, CancellationToken token) =>
+{
+    if (!AdminRefreshAuthorization.IsAuthorized(request.Headers[AdminRefreshAuthorization.HeaderName].ToString(), configuration["AdminAccess:RefreshKey"])) return Results.Unauthorized();
+    if (file is null || !EvidenceUploadValidation.IsAllowed(file) || string.IsNullOrWhiteSpace(description)) return Results.BadRequest(new { error = "Archivo o metadatos de evidencia no válidos." });
+    try
+    {
+        await using var content = file.OpenReadStream();
+        return Results.Created($"/api/v1/fixtures/{fixtureId}/evidence", await evidence.CreateAsync(fixtureId, new CreateEvidenceAssetRequest(minute ?? 0, description, Path.GetFileName(file.FileName), file.ContentType.ToLowerInvariant(), file.Length, content), token));
+    }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
+    catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+})
+    .WithName("CreateFixtureEvidence")
+    .Accepts<IFormFile>("multipart/form-data")
+    .Produces<EvidenceAssetSummary>(StatusCodes.Status201Created)
     .Produces(StatusCodes.Status400BadRequest)
     .Produces(StatusCodes.Status401Unauthorized)
     .Produces(StatusCodes.Status404NotFound);

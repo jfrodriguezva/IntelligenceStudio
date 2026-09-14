@@ -18,6 +18,7 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
     public DbSet<MatchEvent> MatchEvents => Set<MatchEvent>();
     public DbSet<MatchNote> MatchNotes => Set<MatchNote>();
     public DbSet<TacticalScene> TacticalScenes => Set<TacticalScene>();
+    public DbSet<EvidenceAsset> EvidenceAssets => Set<EvidenceAsset>();
     public DbSet<TeamMatchStatistic> TeamMatchStatistics => Set<TeamMatchStatistic>();
 
     public DbSet<ProviderEntityMapping> ProviderEntityMappings => Set<ProviderEntityMapping>();
@@ -109,6 +110,19 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
             builder.Property(scene => scene.StateJson).HasColumnType("nvarchar(max)").IsRequired();
             builder.HasIndex(scene => new { scene.FixtureId, scene.CreatedAt });
             builder.HasOne<Fixture>().WithMany().HasForeignKey(scene => scene.FixtureId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<EvidenceAsset>(builder =>
+        {
+            builder.ToTable("evidence_assets");
+            builder.HasKey(asset => asset.Id);
+            builder.Property(asset => asset.Description).HasMaxLength(2000).IsRequired();
+            builder.Property(asset => asset.OriginalFileName).HasMaxLength(255).IsRequired();
+            builder.Property(asset => asset.ContentType).HasMaxLength(100).IsRequired();
+            builder.Property(asset => asset.ObjectKey).HasMaxLength(255).IsRequired();
+            builder.HasIndex(asset => new { asset.FixtureId, asset.Minute, asset.Id });
+            builder.HasIndex(asset => asset.ObjectKey).IsUnique();
+            builder.HasOne<Fixture>().WithMany().HasForeignKey(asset => asset.FixtureId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<TeamMatchStatistic>(builder =>
