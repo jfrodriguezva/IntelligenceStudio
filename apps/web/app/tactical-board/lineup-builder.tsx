@@ -26,7 +26,6 @@ export function LineupBuilder({ fixtureId, squad }: { fixtureId: string; squad: 
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const origin = process.env.NEXT_PUBLIC_MIS_API_ORIGIN ?? "http://localhost:5080";
   const chosen = squad.filter((player) => selected[player.id]);
 
   useEffect(() => { setScenes([]); setStatus(""); }, [fixtureId]);
@@ -47,7 +46,7 @@ export function LineupBuilder({ fixtureId, squad }: { fixtureId: string; squad: 
     if (!key) { setStatus("Escribe la clave administrativa para consultar las escenas."); return; }
     setLoading(true); setStatus("");
     try {
-      const response = await fetch(`${origin}/api/v1/fixtures/${fixtureId}/tactical-scenes`, { headers: { "X-MIS-Admin-Key": key } });
+      const response = await fetch(`/api/v1/fixtures/${fixtureId}/tactical-scenes`, { headers: { "X-MIS-Admin-Key": key } });
       if (!response.ok) { setStatus(response.status === 401 ? "La clave administrativa no es válida." : "No fue posible consultar las escenas."); return; }
       setScenes(await response.json());
     } catch { setStatus("No se pudo conectar con el servicio táctico."); }
@@ -59,7 +58,7 @@ export function LineupBuilder({ fixtureId, squad }: { fixtureId: string; squad: 
     const state: SceneState = { schemaVersion: 1, players: Object.entries(selected).map(([playerId, marker]) => ({ playerId, ...marker })) };
     setLoading(true); setStatus("");
     try {
-      const response = await fetch(`${origin}/api/v1/fixtures/${fixtureId}/tactical-scenes`, { method: "POST", headers: { "Content-Type": "application/json", "X-MIS-Admin-Key": key }, body: JSON.stringify({ title: title.trim(), stateJson: JSON.stringify(state) }) });
+      const response = await fetch(`/api/v1/fixtures/${fixtureId}/tactical-scenes`, { method: "POST", headers: { "Content-Type": "application/json", "X-MIS-Admin-Key": key }, body: JSON.stringify({ title: title.trim(), stateJson: JSON.stringify(state) }) });
       if (!response.ok) { setStatus(response.status === 401 ? "La clave administrativa no es válida." : "No fue posible guardar la escena."); return; }
       const created: Scene = await response.json(); setScenes((current) => [created, ...current]); setStatus("Escena guardada como versión independiente.");
     } catch { setStatus("No se pudo conectar con el servicio táctico."); }

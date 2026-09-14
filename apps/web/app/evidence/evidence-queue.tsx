@@ -12,7 +12,6 @@ export function EvidenceQueue({ fixtureId }: { fixtureId: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const origin = process.env.NEXT_PUBLIC_MIS_API_ORIGIN ?? "http://localhost:5080";
 
   useEffect(() => { setItems([]); setStatus(""); setFile(null); }, [fixtureId]);
 
@@ -20,7 +19,7 @@ export function EvidenceQueue({ fixtureId }: { fixtureId: string }) {
     if (!key) { setStatus("Escribe la clave administrativa para consultar la evidencia."); return; }
     setLoading(true); setStatus("");
     try {
-      const response = await fetch(`${origin}/api/v1/fixtures/${fixtureId}/evidence`, { headers: { "X-MIS-Admin-Key": key } });
+      const response = await fetch(`/api/v1/fixtures/${fixtureId}/evidence`, { headers: { "X-MIS-Admin-Key": key } });
       if (!response.ok) { setStatus(response.status === 401 ? "La clave administrativa no es válida." : "No fue posible consultar la evidencia."); return; }
       setItems(await response.json());
     } catch { setStatus("No se pudo conectar con el Centro de evidencia."); }
@@ -36,7 +35,7 @@ export function EvidenceQueue({ fixtureId }: { fixtureId: string }) {
     payload.append("file", file); payload.append("minute", minute || "0"); payload.append("description", description.trim());
     setLoading(true); setStatus("");
     try {
-      const response = await fetch(`${origin}/api/v1/fixtures/${fixtureId}/evidence`, { method: "POST", headers: { "X-MIS-Admin-Key": key }, body: payload });
+      const response = await fetch(`/api/v1/fixtures/${fixtureId}/evidence`, { method: "POST", headers: { "X-MIS-Admin-Key": key }, body: payload });
       if (!response.ok) { setStatus(response.status === 401 ? "La clave administrativa no es válida." : "El archivo fue rechazado. Usa una imagen o video permitido de hasta 100 MB."); return; }
       const created: Evidence = await response.json(); setItems((current) => [...current, created].sort((left, right) => left.minute - right.minute)); setMinute(""); setDescription(""); setFile(null); setStatus("Evidencia guardada en el repositorio privado local.");
     } catch { setStatus("No se pudo conectar con el Centro de evidencia."); }

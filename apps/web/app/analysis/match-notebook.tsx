@@ -13,7 +13,6 @@ export function MatchNotebook({ fixtureId }: { fixtureId?: string }) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const origin = process.env.NEXT_PUBLIC_MIS_API_ORIGIN ?? "http://localhost:5080";
 
   useEffect(() => { setNotes([]); setStatus(""); }, [fixtureId]);
 
@@ -21,7 +20,7 @@ export function MatchNotebook({ fixtureId }: { fixtureId?: string }) {
     if (!fixtureId || !key) { setStatus("Escribe la clave administrativa para consultar la libreta."); return; }
     setLoading(true); setStatus("");
     try {
-      const response = await fetch(`${origin}/api/v1/fixtures/${fixtureId}/notes`, { headers: { "X-MIS-Admin-Key": key } });
+      const response = await fetch(`/api/v1/fixtures/${fixtureId}/notes`, { headers: { "X-MIS-Admin-Key": key } });
       if (!response.ok) { setStatus(response.status === 401 ? "La clave administrativa no es válida." : "No fue posible consultar las observaciones."); return; }
       setNotes(await response.json());
     } catch { setStatus("No se pudo conectar con el servicio de análisis."); }
@@ -32,7 +31,7 @@ export function MatchNotebook({ fixtureId }: { fixtureId?: string }) {
     event.preventDefault();
     if (!text.trim() || !fixtureId || !key) { setStatus("Completa la clave y la observación antes de guardar."); return; }
     setLoading(true); setStatus("");
-    const response = await fetch(`${origin}/api/v1/fixtures/${fixtureId}/notes`, { method: "POST", headers: { "Content-Type": "application/json", "X-MIS-Admin-Key": key }, body: JSON.stringify({ minute: Number(minute || 0), tag, text }) });
+    const response = await fetch(`/api/v1/fixtures/${fixtureId}/notes`, { method: "POST", headers: { "Content-Type": "application/json", "X-MIS-Admin-Key": key }, body: JSON.stringify({ minute: Number(minute || 0), tag, text }) });
     if (!response.ok) { setStatus(response.status === 401 ? "La clave administrativa no es válida." : "No fue posible guardar la observación."); setLoading(false); return; }
     const created: Note = await response.json();
     setNotes((current) => [...current, created].sort((left, right) => left.minute - right.minute));

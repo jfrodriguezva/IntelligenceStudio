@@ -8,8 +8,7 @@ export function RefreshFixtures() {
 
   async function refresh() {
     setMessage("Actualizando…");
-    const origin = process.env.NEXT_PUBLIC_MIS_API_ORIGIN ?? "http://localhost:5080";
-    const response = await fetch(`${origin}/api/v1/acquisition/fixtures/refresh`, { method: "POST", headers: { "X-MIS-Admin-Key": key } });
+    const response = await fetch("/api/v1/acquisition/fixtures/refresh", { method: "POST", headers: { "X-MIS-Admin-Key": key } });
     setMessage(response.ok ? "Actualización terminada. Recarga la página para ver los datos." : "No se pudo actualizar. Verifica la clave administrativa.");
     setKey("");
   }
