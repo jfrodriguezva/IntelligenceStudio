@@ -19,6 +19,7 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
     public DbSet<MatchNote> MatchNotes => Set<MatchNote>();
     public DbSet<TacticalScene> TacticalScenes => Set<TacticalScene>();
     public DbSet<EvidenceAsset> EvidenceAssets => Set<EvidenceAsset>();
+    public DbSet<MatchPrediction> MatchPredictions => Set<MatchPrediction>();
     public DbSet<TeamMatchStatistic> TeamMatchStatistics => Set<TeamMatchStatistic>();
 
     public DbSet<ProviderEntityMapping> ProviderEntityMappings => Set<ProviderEntityMapping>();
@@ -124,6 +125,7 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
             builder.HasIndex(asset => asset.ObjectKey).IsUnique();
             builder.HasOne<Fixture>().WithMany().HasForeignKey(asset => asset.FixtureId).OnDelete(DeleteBehavior.Restrict);
         });
+        modelBuilder.Entity<MatchPrediction>(builder => { builder.ToTable("match_predictions"); builder.HasKey(x => x.Id); builder.Property(x => x.ModelVersion).HasMaxLength(100).IsRequired(); builder.HasIndex(x => new { x.FixtureId, x.GeneratedAt }); builder.HasOne<Fixture>().WithMany().HasForeignKey(x => x.FixtureId).OnDelete(DeleteBehavior.Restrict); });
 
         modelBuilder.Entity<TeamMatchStatistic>(builder =>
         {

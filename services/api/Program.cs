@@ -27,6 +27,7 @@ builder.Services.AddScoped<IMatchNoteService, MatchNoteService>();
 builder.Services.AddScoped<ITacticalSceneService, TacticalSceneService>();
 builder.Services.AddSingleton<IEvidenceStorage>(_ => new LocalEvidenceStorage(Path.Combine(builder.Environment.ContentRootPath, ".local-data", "evidence")));
 builder.Services.AddScoped<IEvidenceAssetService, EvidenceAssetService>();
+builder.Services.AddScoped<IMatchPredictionService, MatchPredictionService>();
 builder.Services.AddScoped<ISyncRunQueries, SyncRunQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
@@ -34,6 +35,7 @@ builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(clien
     client.BaseAddress = new Uri(builder.Configuration["FootballData:ApiFootball:BaseUrl"]!);
     client.DefaultRequestHeaders.Add("x-apisports-key", builder.Configuration["FootballData:ApiFootball:ApiKey"]!);
 });
+builder.Services.AddHttpClient<IBaselinePredictionRuntime, BaselinePredictionRuntime>(client => client.BaseAddress = new Uri(builder.Configuration["MachineLearning:BaseUrl"] ?? "http://localhost:8000"));
 
 var app = builder.Build();
 
@@ -86,6 +88,20 @@ app.MapGet("/api/v1/fixtures/{fixtureId:guid}/events", async (Guid fixtureId, IM
     Results.Ok(await queries.GetForFixtureAsync(fixtureId, token)))
     .WithName("GetFixtureEvents")
     .Produces<IReadOnlyList<MatchEventSummary>>();
+
+app.MapGet("/api/v1/fixtures/{fixtureId:guid}/predictions/latest", async (Guid fixtureId, IMatchPredictionService predictions, CancellationToken token) =>
+{
+    var prediction = await predictions.GetLatestAsync(fixtureId, token);
+    return prediction is null ? Results.NotFound() : Results.Ok(prediction);
+}).WithName("GetLatestPrediction").Produces<MatchPredictionSummary>().Produces(StatusCodes.Status404NotFound);
+
+app.MapPost("/api/v1/fixtures/{fixtureId:guid}/predictions/baseline", async (Guid fixtureId, HttpRequest request, IConfiguration configuration, IMatchPredictionService predictions, CancellationToken token) =>
+{
+    if (!AdminRefreshAuthorization.IsAuthorized(request.Headers[AdminRefreshAuthorization.HeaderName].ToString(), configuration["AdminAccess:RefreshKey"])) return Results.Unauthorized();
+    try { return Results.Created($"/api/v1/fixtures/{fixtureId}/predictions/latest", await predictions.GenerateBaselineAsync(fixtureId, token)); }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
+    catch (HttpRequestException) { return Results.Problem("El runtime de ML no está disponible.", statusCode: StatusCodes.Status503ServiceUnavailable); }
+}).WithName("GenerateBaselinePrediction").Produces<MatchPredictionSummary>(StatusCodes.Status201Created).Produces(StatusCodes.Status401Unauthorized).Produces(StatusCodes.Status404NotFound).Produces(StatusCodes.Status503ServiceUnavailable);
 
 app.MapGet("/api/v1/fixtures/{fixtureId:guid}/notes", async (Guid fixtureId, HttpRequest request, IConfiguration configuration, IMatchNoteService notes, CancellationToken token) =>
 {
