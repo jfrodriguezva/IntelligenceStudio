@@ -17,6 +17,7 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
     public DbSet<SquadMembership> SquadMemberships => Set<SquadMembership>();
     public DbSet<MatchEvent> MatchEvents => Set<MatchEvent>();
     public DbSet<MatchNote> MatchNotes => Set<MatchNote>();
+    public DbSet<TacticalScene> TacticalScenes => Set<TacticalScene>();
     public DbSet<TeamMatchStatistic> TeamMatchStatistics => Set<TeamMatchStatistic>();
 
     public DbSet<ProviderEntityMapping> ProviderEntityMappings => Set<ProviderEntityMapping>();
@@ -98,6 +99,16 @@ public sealed class MisDbContext(DbContextOptions<MisDbContext> options) : DbCon
             builder.Property(note => note.Text).HasMaxLength(2000).IsRequired();
             builder.HasIndex(note => new { note.FixtureId, note.Minute, note.Id });
             builder.HasOne<Fixture>().WithMany().HasForeignKey(note => note.FixtureId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TacticalScene>(builder =>
+        {
+            builder.ToTable("tactical_scenes");
+            builder.HasKey(scene => scene.Id);
+            builder.Property(scene => scene.Title).HasMaxLength(160).IsRequired();
+            builder.Property(scene => scene.StateJson).HasColumnType("nvarchar(max)").IsRequired();
+            builder.HasIndex(scene => new { scene.FixtureId, scene.CreatedAt });
+            builder.HasOne<Fixture>().WithMany().HasForeignKey(scene => scene.FixtureId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<TeamMatchStatistic>(builder =>

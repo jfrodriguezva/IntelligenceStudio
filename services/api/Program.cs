@@ -24,6 +24,7 @@ builder.Services.AddScoped<ITeamFormQueries, TeamFormQueries>();
 builder.Services.AddScoped<ISquadQueries, SquadQueries>();
 builder.Services.AddScoped<IMatchEventQueries, MatchEventQueries>();
 builder.Services.AddScoped<IMatchNoteService, MatchNoteService>();
+builder.Services.AddScoped<ITacticalSceneService, TacticalSceneService>();
 builder.Services.AddScoped<ISyncRunQueries, SyncRunQueries>();
 builder.Services.AddHealthChecks().AddDbContextCheck<MisDbContext>();
 builder.Services.AddHttpClient<IManualFixtureSync, ApiFootballFixtureSync>(client =>
@@ -101,6 +102,28 @@ app.MapPost("/api/v1/fixtures/{fixtureId:guid}/notes", async (Guid fixtureId, Cr
 })
     .WithName("CreateMatchNote")
     .Produces<MatchNoteSummary>(StatusCodes.Status201Created)
+    .Produces(StatusCodes.Status401Unauthorized)
+    .Produces(StatusCodes.Status404NotFound);
+
+app.MapGet("/api/v1/fixtures/{fixtureId:guid}/tactical-scenes", async (Guid fixtureId, HttpRequest request, IConfiguration configuration, ITacticalSceneService scenes, CancellationToken token) =>
+{
+    if (!AdminRefreshAuthorization.IsAuthorized(request.Headers[AdminRefreshAuthorization.HeaderName].ToString(), configuration["AdminAccess:RefreshKey"])) return Results.Unauthorized();
+    return Results.Ok(await scenes.GetForFixtureAsync(fixtureId, token));
+})
+    .WithName("GetTacticalScenes")
+    .Produces<IReadOnlyList<TacticalSceneSummary>>()
+    .Produces(StatusCodes.Status401Unauthorized);
+
+app.MapPost("/api/v1/fixtures/{fixtureId:guid}/tactical-scenes", async (Guid fixtureId, CreateTacticalSceneRequest request, HttpRequest httpRequest, IConfiguration configuration, ITacticalSceneService scenes, CancellationToken token) =>
+{
+    if (!AdminRefreshAuthorization.IsAuthorized(httpRequest.Headers[AdminRefreshAuthorization.HeaderName].ToString(), configuration["AdminAccess:RefreshKey"])) return Results.Unauthorized();
+    try { return Results.Created($"/api/v1/fixtures/{fixtureId}/tactical-scenes", await scenes.CreateAsync(fixtureId, request, token)); }
+    catch (KeyNotFoundException) { return Results.NotFound(); }
+    catch (ArgumentException exception) { return Results.BadRequest(new { error = exception.Message }); }
+})
+    .WithName("CreateTacticalScene")
+    .Produces<TacticalSceneSummary>(StatusCodes.Status201Created)
+    .Produces(StatusCodes.Status400BadRequest)
     .Produces(StatusCodes.Status401Unauthorized)
     .Produces(StatusCodes.Status404NotFound);
 

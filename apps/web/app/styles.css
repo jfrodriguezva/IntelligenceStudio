@@ -28,3 +28,14 @@ a { color: #c7d2fe; }
 .refresh { border: 1px solid #475569; border-radius: .5rem; margin: 2rem 0; padding: 1rem; }
 input, button { border-radius: .25rem; font: inherit; margin-right: .5rem; padding: .5rem; }
 button { background: #a5b4fc; border: 0; color: #0b1020; font-weight: 700; }
+.tactical-layout { display: grid; gap: 1.5rem; grid-template-columns: minmax(18rem, 1fr) minmax(18rem, 1fr); margin-top: 1.5rem; }
+.pitch { aspect-ratio: .68; background: repeating-linear-gradient(0deg, #167044 0 10%, #12633c 10% 20%); border: 3px solid #e2e8f0; min-height: 32rem; overflow: hidden; position: relative; }
+.pitch::before { border: 2px solid rgb(255 255 255 / .75); content: ""; inset: 8% 11%; position: absolute; }
+.pitch::after { border: 2px solid rgb(255 255 255 / .75); border-radius: 50%; content: ""; height: 24%; left: 35%; position: absolute; top: 38%; width: 30%; }
+.player-marker { align-items: center; background: #f8fafc; border: 2px solid #1e293b; border-radius: 50%; color: #0f172a; display: flex; font-size: .72rem; font-weight: 800; height: 3.4rem; justify-content: center; overflow: hidden; padding: .3rem; position: absolute; text-align: center; transform: translate(-50%, -50%); width: 3.4rem; z-index: 1; }
+.compact-list { margin: 0; max-height: 42rem; overflow-y: auto; }
+.compact-list li { padding: .55rem 0; }
+.marker-controls { align-items: center; display: flex; flex-wrap: wrap; gap: .35rem; margin: .4rem 0 0 1.5rem; }
+.marker-controls label { align-items: center; display: flex; font-size: .8rem; gap: .25rem; }
+.marker-controls input { margin: 0; padding: 0; width: 5rem; }
+@media (max-width: 760px) { .tactical-layout { grid-template-columns: 1fr; } .pitch { min-height: 26rem; } }

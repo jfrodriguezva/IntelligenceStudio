@@ -1,6 +1,6 @@
 import { LineupBuilder } from "./lineup-builder";
 
-type Fixture = { homeTeam: string; homeTeamId: string; awayTeam: string; awayTeamId: string };
+type Fixture = { id: string; homeTeam: string; homeTeamId: string; awayTeam: string; awayTeamId: string };
 type FixturePage = { items: Fixture[] };
 type Player = { id: string; name: string; position: string };
 
@@ -12,5 +12,5 @@ export default async function TacticalBoardPage() {
   const teamId = fixture?.homeTeam === "Real Madrid" ? fixture.homeTeamId : fixture?.awayTeamId;
   const squadResponse = teamId ? await fetch(`${origin}/api/v1/teams/${teamId}/squad`, { cache: "no-store" }) : null;
   const squad: Player[] = squadResponse?.ok ? await squadResponse.json() : [];
-  return <main><p className="eyebrow">Pizarra táctica</p><h1>Once inicial</h1>{squad.length === 0 ? <p>Actualiza los datos para cargar la plantilla.</p> : <LineupBuilder squad={squad} />}</main>;
+  return <main><p className="eyebrow">Pizarra táctica</p><h1>Once inicial</h1>{squad.length === 0 || !fixture ? <p>Actualiza los datos para cargar la plantilla.</p> : <LineupBuilder fixtureId={fixture.id} squad={squad} />}</main>;
 }
